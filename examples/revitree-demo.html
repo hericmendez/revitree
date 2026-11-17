@@ -1,0 +1,347 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>ReviTree · demo-projeto</title>
+  <style>
+    :root { color-scheme: dark; font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #090e1a; color: #e8ecf7; line-height: 1.5; }
+    .shell { width: min(1040px, 100%); margin: 0 auto; padding: 48px 24px 80px; }
+    .brand { text-transform: uppercase; letter-spacing: .2em; font-size: .74rem; color: #94a8ff; font-weight: 800; }
+    h1 { font-size: clamp(1.5rem, 4vw, 2.5rem); margin: 8px 0 2px; overflow-wrap: anywhere; }
+    .intro { margin: 0 0 23px; color: #9caac6; }
+    .stats { display: flex; gap: 9px; flex-wrap: wrap; margin-bottom: 23px; }
+    .stat { border: 1px solid #303b54; background: #182035; color: #d0d8ec; border-radius: 999px; padding: 6px 12px; font-size: .84rem; }
+    .panel { border: 1px solid #303a52; background: #121a2c; border-radius: 15px; overflow: hidden; box-shadow: 0 16px 60px #0003; }
+    .toolbar { display: flex; flex-wrap: wrap; gap: 10px; border-bottom: 1px solid #303a52; padding: 17px; }
+    input, button { font: inherit; border-radius: 9px; padding: 9px 12px; }
+    .sort-controls { display: flex; align-items: center; gap: 0; border: 1px solid #41516e; border-radius: 9px; overflow: hidden; }
+    .sort-label { padding: 0 10px; color: #b5c0d9; font-size: .83rem; white-space: nowrap; }
+    .sort-controls button { border: 0; border-left: 1px solid #41516e; border-radius: 0; padding: 9px 12px; }
+    .sort-controls button[aria-pressed="true"] { background: #435c9a; color: #fff; font-weight: 700; }
+    input { background: #0a1222; border: 1px solid #3b4963; color: #f2f5ff; min-width: 180px; flex: 1; outline: none; }
+    input:focus-visible, button:focus-visible, summary:focus-visible { outline: 2px solid #a2b5ff; outline-offset: 2px; }
+    button { color: #e1e8f7; background: #24314c; border: 1px solid #41516e; cursor: pointer; }
+    button:hover:not(:disabled) { background: #304161; }
+    button:disabled { opacity: .48; cursor: not-allowed; }
+    .tree-wrap { padding: 18px 20px 28px; overflow-x: auto; }
+    .tree, .children { padding: 0; margin: 0; list-style: none; }
+    .children { margin: 4px 0 6px 17px; padding-left: 17px; border-left: 1px solid #35425b; }
+    .entry { min-width: max-content; }
+    .entry[hidden] { display: none !important; }
+    summary, .file-row { display: flex; align-items: center; min-height: 35px; padding: 4px 10px; gap: 9px; border-radius: 7px; }
+    summary { cursor: pointer; list-style: none; user-select: none; }
+    summary::-webkit-details-marker { display: none; }
+    summary:hover, .file-row:hover { background: #222e48; }
+    .chevron { width: 13px; height: 13px; fill: none; stroke: #8fa1c2; stroke-width: 2.3; flex: none; transition: transform .12s; }
+    details[open] > summary .chevron { transform: rotate(90deg); }
+    .file-row { padding-left: 32px; }
+    .emoji { flex: none; }
+    .filename { font-size: .94rem; white-space: nowrap; }
+    .count { color: #8c9aba; font-size: .77rem; margin-left: 4px; }
+    .size { color: #9aa9c8; font-variant-numeric: tabular-nums; font-size: .82rem; margin-left: 12px; }
+    .note { color: #9eabc4; padding: 4px 10px 4px 32px; font-size: .85rem; }
+    .error { color: #e3ad93; }
+    .footer { color: #93a1bc; margin: 12px 2px; font-size: .82rem; }
+    .context-menu { position: fixed; z-index: 100; min-width: 235px; padding: 5px; border: 1px solid #465572; background: #1b263e; border-radius: 9px; box-shadow: 0 12px 32px #0009; }
+    .context-menu[hidden] { display: none !important; }
+    .context-menu button { display: block; width: 100%; text-align: left; padding: 9px 11px; border: 0; background: transparent; }
+    .context-menu button:hover:not(:disabled), .context-menu button:focus-visible { background: #344463; }
+    @media (max-width: 600px) { .shell { padding: 26px 12px; } .toolbar { padding: 12px; } input { flex-basis: 100%; } .tree-wrap { padding: 13px 10px; } }
+    @media (prefers-reduced-motion: reduce) { .chevron { transition: none; } }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <div class="brand">ReviTree · Directory Explorer</div>
+    <h1>📁 demo-projeto</h1>
+    <p class="intro">Estrutura de diretórios · Visualização offline</p>
+    <div class="stats">
+      <span class="stat">📁 6 pastas</span>
+      <span class="stat">📄 7 arquivos</span>
+      <span class="stat">🔗 0 links simbólicos</span>
+      <span class="stat">💾 2 MiB no total</span>
+      
+    </div>
+    <section class="panel" aria-label="Explorador de diretórios">
+      <div class="toolbar">
+        <input id="search" type="search" placeholder="Buscar pasta ou arquivo..." aria-label="Buscar arquivos e pastas" autocomplete="off">
+        <div class="sort-controls" role="group" aria-label="Ordenar itens">
+          <span class="sort-label">Ordenar por</span>
+          <button id="sort-title" type="button" aria-pressed="true">Título</button>
+          <button id="sort-size" type="button" aria-pressed="false">Tamanho ↓</button>
+        </div>
+        <button id="expand" type="button">Expandir tudo</button>
+        <button id="collapse" type="button">Recolher tudo</button>
+      </div>
+      <div class="tree-wrap"><ul class="tree"><li class="entry folder" data-name="demo-projeto" data-path="." data-size="2132743" data-root="true">
+      <details open>
+        <summary>
+          <svg class="chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6" /></svg>
+          <span class="emoji" aria-hidden="true">📁</span>
+          <span class="filename">demo-projeto/</span>
+          <span class="count">4 itens</span><span class="size folder-size">2 MiB</span>
+        </summary>
+        <ul class="children"><li class="entry folder" data-name="docs" data-path="docs" data-size="700">
+      <details>
+        <summary>
+          <svg class="chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6" /></svg>
+          <span class="emoji" aria-hidden="true">📁</span>
+          <span class="filename">docs/</span>
+          <span class="count">1 item</span><span class="size folder-size">700 B</span>
+        </summary>
+        <ul class="children"><li class="entry file" data-name="README.md" data-path="docs/README.md" data-size="700">
+        <div class="file-row"><span class="emoji" aria-hidden="true">📄</span>
+        <span class="filename">README.md</span><span class="size">700 B</span></div>
+      </li></ul>
+      </details>
+    </li>
+<li class="entry folder" data-name="public" data-path="public" data-size="2129920">
+      <details>
+        <summary>
+          <svg class="chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6" /></svg>
+          <span class="emoji" aria-hidden="true">📁</span>
+          <span class="filename">public/</span>
+          <span class="count">2 itens</span><span class="size folder-size">2 MiB</span>
+        </summary>
+        <ul class="children"><li class="entry folder" data-name="images" data-path="public/images" data-size="2097152">
+      <details>
+        <summary>
+          <svg class="chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6" /></svg>
+          <span class="emoji" aria-hidden="true">📁</span>
+          <span class="filename">images/</span>
+          <span class="count">1 item</span><span class="size folder-size">2 MiB</span>
+        </summary>
+        <ul class="children"><li class="entry file" data-name="banner.png" data-path="public/images/banner.png" data-size="2097152">
+        <div class="file-row"><span class="emoji" aria-hidden="true">📄</span>
+        <span class="filename">banner.png</span><span class="size">2 MiB</span></div>
+      </li></ul>
+      </details>
+    </li>
+<li class="entry file" data-name="favicon.ico" data-path="public/favicon.ico" data-size="32768">
+        <div class="file-row"><span class="emoji" aria-hidden="true">📄</span>
+        <span class="filename">favicon.ico</span><span class="size">32 KiB</span></div>
+      </li></ul>
+      </details>
+    </li>
+<li class="entry folder" data-name="src" data-path="src" data-size="2100">
+      <details>
+        <summary>
+          <svg class="chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6" /></svg>
+          <span class="emoji" aria-hidden="true">📁</span>
+          <span class="filename">src/</span>
+          <span class="count">3 itens</span><span class="size folder-size">2.1 KiB</span>
+        </summary>
+        <ul class="children"><li class="entry folder" data-name="components" data-path="src/components" data-size="1100">
+      <details>
+        <summary>
+          <svg class="chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6" /></svg>
+          <span class="emoji" aria-hidden="true">📁</span>
+          <span class="filename">components/</span>
+          <span class="count">1 item</span><span class="size folder-size">1.1 KiB</span>
+        </summary>
+        <ul class="children"><li class="entry file" data-name="Button.tsx" data-path="src/components/Button.tsx" data-size="1100">
+        <div class="file-row"><span class="emoji" aria-hidden="true">📄</span>
+        <span class="filename">Button.tsx</span><span class="size">1.1 KiB</span></div>
+      </li></ul>
+      </details>
+    </li>
+<li class="entry folder" data-name="utils" data-path="src/utils" data-size="400">
+      <details>
+        <summary>
+          <svg class="chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6" /></svg>
+          <span class="emoji" aria-hidden="true">📁</span>
+          <span class="filename">utils/</span>
+          <span class="count">1 item</span><span class="size folder-size">400 B</span>
+        </summary>
+        <ul class="children"><li class="entry file" data-name="format.ts" data-path="src/utils/format.ts" data-size="400">
+        <div class="file-row"><span class="emoji" aria-hidden="true">📄</span>
+        <span class="filename">format.ts</span><span class="size">400 B</span></div>
+      </li></ul>
+      </details>
+    </li>
+<li class="entry file" data-name="index.ts" data-path="src/index.ts" data-size="600">
+        <div class="file-row"><span class="emoji" aria-hidden="true">📄</span>
+        <span class="filename">index.ts</span><span class="size">600 B</span></div>
+      </li></ul>
+      </details>
+    </li>
+<li class="entry file" data-name="package.json" data-path="package.json" data-size="23">
+        <div class="file-row"><span class="emoji" aria-hidden="true">📄</span>
+        <span class="filename">package.json</span><span class="size">23 B</span></div>
+      </li></ul>
+      </details>
+    </li></ul></div>
+    </section>
+    <p id="feedback" class="footer" role="status">Clique nas pastas para expandir ou recolher. Botão direito abre o menu de contexto.</p>
+  </main>
+  <div id="context-menu" class="context-menu" role="menu" aria-label="Ações do item" hidden>
+    <button id="reveal" type="button" role="menuitem">Abrir local do arquivo</button>
+    <button id="copy-path" type="button" role="menuitem">Copiar caminho relativo</button>
+  </div>
+  <script>
+    (() => {
+      const serverToken = "";
+      const initialSort = "title";
+      const search = document.getElementById('search');
+      const feedback = document.getElementById('feedback');
+      const root = document.querySelector('[data-root="true"]');
+      const entries = [...document.querySelectorAll('li.entry')];
+      const folders = [...document.querySelectorAll('details')];
+      const rootDetails = root.querySelector(':scope > details');
+      const normalize = (text) => text.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+      const collator = new Intl.Collator('pt-BR', { numeric: true, sensitivity: 'base' });
+      const sortTitle = document.getElementById('sort-title');
+      const sortSize = document.getElementById('sort-size');
+
+      function applySort(mode) {
+        for (const list of document.querySelectorAll('ul.children')) {
+          const children = [...list.children].filter((item) => item.classList.contains('entry'));
+          const note = [...list.children].find((item) => item.classList.contains('note')) || null;
+          children.sort((a, b) => {
+            const foldersFirst = Number(b.classList.contains('folder')) - Number(a.classList.contains('folder'));
+            if (foldersFirst) return foldersFirst;
+            if (mode === 'size') {
+              const aBytes = Number(a.dataset.size);
+              const bBytes = Number(b.dataset.size);
+              if (aBytes !== bBytes) return bBytes - aBytes;
+            }
+            return collator.compare(a.dataset.name, b.dataset.name);
+          });
+          for (const child of children) list.insertBefore(child, note);
+        }
+        sortTitle.setAttribute('aria-pressed', String(mode === 'title'));
+        sortSize.setAttribute('aria-pressed', String(mode === 'size'));
+      }
+      sortTitle.addEventListener('click', () => applySort('title'));
+      sortSize.addEventListener('click', () => applySort('size'));
+      applySort(initialSort);
+
+      function filter(node, term, inheritedMatch = false, isRoot = false) {
+        const name = normalize(node.dataset.name);
+        const ownMatch = !isRoot && name.includes(term);
+        const matchAllDescendants = inheritedMatch || ownMatch;
+        const children = [...node.querySelectorAll(':scope > details > ul > li.entry')];
+        let descendantMatch = false;
+        for (const child of children) {
+          if (filter(child, term, matchAllDescendants)) descendantMatch = true;
+        }
+        const visible = isRoot || matchAllDescendants || descendantMatch;
+        node.hidden = !visible;
+        const details = node.querySelector(':scope > details');
+        if (details && visible) details.open = true;
+        return visible && !isRoot;
+      }
+
+      search.addEventListener('input', () => {
+        const term = normalize(search.value.trim());
+        if (!term) {
+          for (const node of entries) node.hidden = false;
+          for (const folder of folders) folder.open = folder === rootDetails;
+          feedback.textContent = 'Clique nas pastas para expandir ou recolher.';
+          return;
+        }
+        filter(root, term, false, true);
+        const matches = entries.filter((node) => node !== root && normalize(node.dataset.name).includes(term)).length;
+        feedback.textContent = matches ? matches + (matches === 1 ? ' correspondência encontrada.' : ' correspondências encontradas.') : 'Nenhuma correspondência encontrada.';
+      });
+
+      document.getElementById('expand').addEventListener('click', () => {
+        for (const folder of folders) folder.open = true;
+      });
+      document.getElementById('collapse').addEventListener('click', () => {
+        for (const folder of folders) folder.open = folder === rootDetails;
+      });
+
+      // O arquivo HTML funciona sem servidor, mas navegadores não podem abrir
+      // o explorador de arquivos do sistema a partir de uma página estática.
+      const canReveal = Boolean(serverToken) && location.protocol === 'http:';
+      const menu = document.getElementById('context-menu');
+      const reveal = document.getElementById('reveal');
+      const copyPath = document.getElementById('copy-path');
+      let selected = null;
+      reveal.disabled = !canReveal;
+      if (!canReveal) reveal.title = 'Execute revitree --html --serve para habilitar esta ação.';
+
+      function closeMenu() { menu.hidden = true; }
+
+      document.addEventListener('contextmenu', (event) => {
+        const row = event.target.closest('summary, .file-row');
+        const entry = row && row.closest('li.entry');
+        if (!entry) return;
+        event.preventDefault();
+        selected = entry;
+        reveal.textContent = entry.classList.contains('folder')
+          ? 'Abrir pasta no explorador'
+          : 'Abrir local do arquivo';
+        menu.hidden = false;
+        menu.style.left = '0px';
+        menu.style.top = '0px';
+        const rect = menu.getBoundingClientRect();
+        menu.style.left = Math.max(0, Math.min(event.clientX, window.innerWidth - rect.width - 8)) + 'px';
+        menu.style.top = Math.max(0, Math.min(event.clientY, window.innerHeight - rect.height - 8)) + 'px';
+      });
+
+      document.addEventListener('click', (event) => {
+        if (!menu.contains(event.target)) closeMenu();
+      });
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') closeMenu();
+      });
+      window.addEventListener('scroll', closeMenu, true);
+
+      async function copyText(value) {
+        if (navigator.clipboard?.writeText) {
+          try {
+            await navigator.clipboard.writeText(value);
+            return true;
+          } catch { /* Tenta o fallback abaixo. */ }
+        }
+        const field = document.createElement('textarea');
+        field.value = value;
+        field.style.position = 'fixed';
+        field.style.opacity = '0';
+        document.body.appendChild(field);
+        field.select();
+        const copied = document.execCommand('copy');
+        field.remove();
+        return copied;
+      }
+
+      copyPath.addEventListener('click', async () => {
+        if (!selected) return;
+        const relative = selected.dataset.path;
+        let copied = false;
+        try { copied = await copyText(relative); } catch { /* O navegador pode bloquear a área de transferência. */ }
+        feedback.textContent = (copied ? 'Caminho relativo copiado: ' : 'Caminho relativo: ') + relative;
+        closeMenu();
+      });
+
+      reveal.addEventListener('click', async () => {
+        if (!canReveal || !selected) return;
+        const relative = selected.dataset.path;
+        closeMenu();
+        try {
+          const response = await fetch('/api/reveal', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-Revitree-Token': serverToken,
+            },
+            body: JSON.stringify({ path: relative }),
+          });
+          const result = await response.json();
+          feedback.textContent = response.ok
+            ? 'Local solicitado no explorador: ' + relative
+            : 'Não foi possível abrir o local: ' + result.error;
+        } catch {
+          feedback.textContent = 'Servidor local indisponível. Execute novamente com --serve.';
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

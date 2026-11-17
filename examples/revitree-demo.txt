@@ -1,0 +1,14 @@
+📁 demo-projeto/
+├── 📁 docs/
+│   └── 📄 README.md
+├── 📁 public/
+│   ├── 📁 images/
+│   │   └── 📄 banner.png
+│   └── 📄 favicon.ico
+├── 📁 src/
+│   ├── 📁 components/
+│   │   └── 📄 Button.tsx
+│   ├── 📁 utils/
+│   │   └── 📄 format.ts
+│   └── 📄 index.ts
+└── 📄 package.json

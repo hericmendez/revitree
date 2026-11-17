@@ -1,0 +1,29 @@
+
+{
+  "name": "revitree",
+  "version": "0.4.0",
+  "description": "CLI para visualizar estruturas de diretórios em TXT, Markdown colapsável e HTML interativo.",
+  "license": "MIT",
+"bin": {
+  "revitree": "bin/revitree.js"
+},
+  "files": [
+    "bin/",
+    "src/"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "test": "node --test"
+  },
+  "keywords": [
+    "directory-tree",
+    "file-tree",
+    "cli",
+    "markdown",
+    "html",
+    "filesystem",
+    "visualization"
+  ]
+}
